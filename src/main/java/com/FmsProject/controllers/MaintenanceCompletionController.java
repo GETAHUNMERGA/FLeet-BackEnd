@@ -1,9 +1,18 @@
 package com.FmsProject.controllers;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,20 +21,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.FmsProject.models.DriverModel;
-import com.FmsProject.models.InCityRequestModel;
 import com.FmsProject.models.MaintenanceCompletionModel;
 import com.FmsProject.models.MaintenanceCostReportModel;
-import com.FmsProject.models.MaintenanceRequestModel;
-import com.FmsProject.models.ReportModel;
 import com.FmsProject.services.MaintenanceCompletionService;
 
 @RestController
 @CrossOrigin
 @RequestMapping("/maintenance")
 public class MaintenanceCompletionController {
+	  @Value("${upload.directory}")
+    private String uploadDir; // The directory where files will be saved
+	@Value("${download.directory}")
+    private String downloadDirs;
+
 	@Autowired
 	private MaintenanceCompletionService _service;
 
@@ -96,7 +108,112 @@ public class MaintenanceCompletionController {
 
 	@PutMapping("/updatecompletion")
 	public void updateCompletion(@RequestBody MaintenanceCompletionModel ment) {
+		System.out.println("Incoming Updates:"+ment);
 		_service.updateCompletion(ment);
 	}
+	//For Checkups
+	 @PutMapping(value = "/updatescompletion", consumes = "multipart/form-data")
+    public void updateCompletion(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("id") Integer id,
+            @RequestParam("dateFromTechnical") String dateFromTechnical,
+            @RequestParam("maintenanceCost") Float maintenanceCost,
+            @RequestParam("dateTaken") String dateTaken,
+            @RequestParam("dateFromGarage") String dateFromGarage,
+            @RequestParam("status") String status) {
+        
+        MaintenanceCompletionModel ment = new MaintenanceCompletionModel();
+        ment.setId(id);
+        ment.setDateFromTechnical(dateFromTechnical);
+        ment.setMaintenanceCost(maintenanceCost);
+        ment.setDateTaken(dateTaken);
+        ment.setDateFromGarage(dateFromGarage);
+        ment.setStatus(status);
+        
+        System.out.println("Incoming Updates: " + ment);
+		
+		 // Log file details
+		 if (file != null && !file.isEmpty()) {
+
+           String projectRoot = System.getProperty("user.dir"); 
+            Path uploadPath = Paths.get(projectRoot, uploadDir,"files");
+ // Ensure the upload directory exists
+ File uploadDirFile = new File(uploadDir);
+ if (!uploadDirFile.exists()) {
+	 uploadDirFile.mkdirs(); // Create the directory if it doesn't exist
+ }
+
+
+
+			try{
+
+            // Generate a unique file name
+            String uniqueFileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(uniqueFileName);
+            File destinationFile = filePath.toFile();
+
+
+
+
+
+
+            // Save the file
+            file.transferTo(destinationFile);
+
+			//String filePath = uploadDir + File.separator + file.getOriginalFilename();
+			//File destinationFile = new File(filePath);
+			   // Save the file
+			   file.transferTo(destinationFile);
+			ment.setFilePath(filePath.toString());
+
+
+
+			_service.updateCompletion(ment);
+            System.out.println("Uploaded File Details:");
+            System.out.println("Original Filename: " + file.getOriginalFilename());
+            System.out.println("File Size: " + file.getSize() + " bytes");
+            System.out.println("Content Type: " + file.getContentType());
+			System.out.println("File Path: " + filePath.toString());
+            // You can log more details if needed
+			}catch(Exception e){
+				e.printStackTrace();
+
+			}
+        } 
+	
+		else {
+            System.out.println("No file uploaded.");
+			_service.updateCompletion(ment);
+        }
+
+        // _service.updateCompletion(ment);
+
+    }
+	
+
+
+@GetMapping("/download/{fileName}")
+public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
+    try {
+		System.out.println("Trying to download from first: " + fileName+""+downloadDirs);
+		
+		String projectRoot = System.getProperty("user.dir"); 
+		//Path uploadPath = Paths.get(projectRoot, uploadDir,"files");
+        Path filePath = Paths.get(projectRoot, uploadDir,"files",fileName).normalize();
+		System.out.println("Trying to download from second: " + filePath);
+        Resource resource = new UrlResource(filePath.toUri());
+		System.out.println("Trying to download from third: " + resource.toString());
+        if (resource.exists() || resource.isReadable()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().build();
+    }
+}
 
 }

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.FmsProject.mappers.MaintenanceCompletionMapper;
 import com.FmsProject.models.MaintenanceCompletionModel;
 import com.FmsProject.models.MaintenanceCostReportModel;
-import com.FmsProject.models.MaintenanceRequestModel;
 
 @Service
 public class MaintenanceCompletionService {
@@ -29,6 +28,8 @@ public class MaintenanceCompletionService {
 	public void updateCompletion(MaintenanceCompletionModel ment) {
 		// System.out.println(ment);
 		if (ment.getDateFromGarage() == null) {
+
+			System.out.println("updateCompletionCost Check:"+ment.getMaintenanceCost());
 			_mapper.updateCompletionCost(ment);
 		} else {
 			_mapper.updateCompletion(ment);

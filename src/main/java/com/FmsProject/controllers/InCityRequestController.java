@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.FmsProject.models.FieldRequestModel;
 import com.FmsProject.models.InCityDispatcherModel;
 import com.FmsProject.models.InCityRequestModel;
-import com.FmsProject.models.OffTimeRequestModel;
 import com.FmsProject.services.InCityRequestService;
 
 @RestController
@@ -72,9 +70,11 @@ public class InCityRequestController {
 	}
 
 	@PutMapping("/reject/{id}")
-	public void rejectRequest(@RequestBody InCityRequestModel req, @PathVariable("id") String id,
-			InCityDispatcherModel mod) {
+	public void rejectRequest(@RequestBody InCityRequestModel req, @PathVariable("id") String id,InCityDispatcherModel mod) {
+		System.out.println("Request id Before Conversions:"+id);
+		System.out.println("Request Object:"+req);
 		Integer reqid = Integer.parseInt(id);
+		System.out.println("Request id After COnversions:"+reqid);
 		if (incityrequestservice.selectRequestById(reqid) != null) {
 			incityrequestservice.rejectRequest(req, mod);
 		} else {

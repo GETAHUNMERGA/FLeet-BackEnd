@@ -31,5 +31,7 @@ public class MaintenanceCompletionModel {
     private String technicalBy;
     private Date technicalRespondDate;
     private String status;
+	// New property for file path
+    private String filePath; // Data type for file path
 
 }

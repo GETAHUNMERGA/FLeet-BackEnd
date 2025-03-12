@@ -21,7 +21,7 @@ public interface MaintenanceCompletionMapper {
 	@Select("select * from tbMaintenanceSubmission")
 	List<MaintenanceCompletionModel> getMaintenanceCompletion();
 
-	@Update("update tbMaintenanceSubmission set maintenanceCost=#{maintenanceCost},dateTaken=#{dateTaken},dateFromGarage=#{dateFromGarage},dateFromTechnical=#{dateFromTechnical} where id =#{id}")
+	@Update("update tbMaintenanceSubmission set maintenanceCost=#{maintenanceCost},dateTaken=#{dateTaken},dateFromGarage=#{dateFromGarage},dateFromTechnical=#{dateFromTechnical},filePath=#{filePath} where id =#{id}")
 	void updateCompletion(MaintenanceCompletionModel ment);
 
 	@Select(" select sum(maintenanceCost) FROM tbMaintenanceSubmission")
